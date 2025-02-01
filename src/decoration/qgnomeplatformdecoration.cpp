@@ -96,29 +96,28 @@ QGnomePlatformDecoration::QGnomePlatformDecoration()
 
 QRectF QGnomePlatformDecoration::closeButtonRect() const
 {
+    const QMargins marg = margins();
     if (GnomeSettings::getInstance().titlebarButtonPlacement() == GnomeSettings::getInstance().RightPlacement) {
-        return QRectF(windowContentGeometry().width() - BUTTON_WIDTH - (BUTTON_SPACING * 0) - BUTTON_MARGINS - margins().right(),
-                      (margins().top() - BUTTON_WIDTH + margins().bottom()) / 2,
+        return QRectF(windowContentGeometry().width() - BUTTON_WIDTH - (BUTTON_SPACING * 0) - BUTTON_MARGINS - marg.right(),
+                      (marg.top() - BUTTON_WIDTH + marg.bottom()) / 2,
                       BUTTON_WIDTH,
                       BUTTON_WIDTH);
     } else {
-        return QRectF(BUTTON_SPACING * 0 + BUTTON_MARGINS + margins().left(),
-                      (margins().top() - BUTTON_WIDTH + margins().bottom()) / 2,
-                      BUTTON_WIDTH,
-                      BUTTON_WIDTH);
+        return QRectF(BUTTON_SPACING * 0 + BUTTON_MARGINS + marg.left(), (marg.top() - BUTTON_WIDTH + marg.bottom()) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
     }
 }
 
 QRectF QGnomePlatformDecoration::maximizeButtonRect() const
 {
+    const QMargins marg = margins();
     if (GnomeSettings::getInstance().titlebarButtonPlacement() == GnomeSettings::getInstance().RightPlacement) {
-        return QRectF(windowContentGeometry().width() - (BUTTON_WIDTH * 2) - (BUTTON_SPACING * 1) - BUTTON_MARGINS - margins().right(),
-                      (margins().top() - BUTTON_WIDTH + margins().bottom()) / 2,
+        return QRectF(windowContentGeometry().width() - (BUTTON_WIDTH * 2) - (BUTTON_SPACING * 1) - BUTTON_MARGINS - marg.right(),
+                      (marg.top() - BUTTON_WIDTH + marg.bottom()) / 2,
                       BUTTON_WIDTH,
                       BUTTON_WIDTH);
     } else {
-        return QRectF(BUTTON_WIDTH * 1 + (BUTTON_SPACING * 1) + BUTTON_MARGINS + margins().left(),
-                      (margins().top() - BUTTON_WIDTH + margins().bottom()) / 2,
+        return QRectF(BUTTON_WIDTH * 1 + (BUTTON_SPACING * 1) + BUTTON_MARGINS + marg.left(),
+                      (marg.top() - BUTTON_WIDTH + marg.bottom()) / 2,
                       BUTTON_WIDTH,
                       BUTTON_WIDTH);
     }
@@ -127,16 +126,16 @@ QRectF QGnomePlatformDecoration::maximizeButtonRect() const
 QRectF QGnomePlatformDecoration::minimizeButtonRect() const
 {
     const bool maximizeEnabled = GnomeSettings::getInstance().titlebarButtons().testFlag(GnomeSettings::getInstance().MaximizeButton);
-
+    const QMargins marg = margins();
     if (GnomeSettings::getInstance().titlebarButtonPlacement() == GnomeSettings::getInstance().RightPlacement) {
         return QRectF(windowContentGeometry().width() - BUTTON_WIDTH * (maximizeEnabled ? 3 : 2) - (BUTTON_SPACING * (maximizeEnabled ? 2 : 1)) - BUTTON_MARGINS
-                          - margins().right(),
-                      (margins().top() - BUTTON_WIDTH + margins().bottom()) / 2,
+                          - marg.right(),
+                      (marg.top() - BUTTON_WIDTH + marg.bottom()) / 2,
                       BUTTON_WIDTH,
                       BUTTON_WIDTH);
     } else {
-        return QRectF(BUTTON_WIDTH * (maximizeEnabled ? 2 : 1) + (BUTTON_SPACING * (maximizeEnabled ? 2 : 1)) + BUTTON_MARGINS + margins().left(),
-                      (margins().top() - BUTTON_WIDTH + margins().bottom()) / 2,
+        return QRectF(BUTTON_WIDTH * (maximizeEnabled ? 2 : 1) + (BUTTON_SPACING * (maximizeEnabled ? 2 : 1)) + BUTTON_MARGINS + marg.left(),
+                      (marg.top() - BUTTON_WIDTH + marg.bottom()) / 2,
                       BUTTON_WIDTH,
                       BUTTON_WIDTH);
     }
@@ -206,6 +205,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
 
     const bool maximized = windowStates & Qt::WindowMaximized;
 
+    const QMargins marg = margins();
     const QRect surfaceRect = windowContentGeometry();
     const QColor borderColor = active ? m_borderColor : m_borderInactiveColor;
 
@@ -273,11 +273,10 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
             m_shadowPixmap = QPixmap::fromImage(backgroundImage);
         }
 
-        QRect clips[] = {
-            QRect(0, 0, surfaceRect.width(), margins().top()),
-            QRect(0, margins().top(), margins().left(), surfaceRect.height() - margins().top() - margins().bottom()),
-            QRect(0, surfaceRect.height() - margins().bottom(), surfaceRect.width(), margins().bottom()),
-            QRect(surfaceRect.width() - margins().right(), margins().top(), margins().right(), surfaceRect.height() - margins().top() - margins().bottom())};
+        QRect clips[] = {QRect(0, 0, surfaceRect.width(), marg.top()),
+                         QRect(0, marg.top(), marg.left(), surfaceRect.height() - marg.top() - marg.bottom()),
+                         QRect(0, surfaceRect.height() - marg.bottom(), surfaceRect.width(), marg.bottom()),
+                         QRect(surfaceRect.width() - marg.right(), marg.top(), marg.right(), surfaceRect.height() - marg.top() - marg.bottom())};
 
         for (int i = 0; i < 4; ++i) {
             p.save();
@@ -301,7 +300,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // ********************************
     QPainterPath borderRect;
     if (!(maximized || tiledLeft || tiledRight)) {
-        borderRect.addRoundedRect(SHADOWS_WIDTH, SHADOWS_WIDTH, surfaceRect.width() - (2 * SHADOWS_WIDTH), margins().top() + 8, 10, 10);
+        borderRect.addRoundedRect(SHADOWS_WIDTH, SHADOWS_WIDTH, surfaceRect.width() - (2 * SHADOWS_WIDTH), marg.top() + 8, 10, 10);
         p.fillPath(borderRect.simplified(), borderColor);
     }
 
@@ -319,9 +318,9 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // ********************************
     QPainterPath roundedRect;
     if (maximized || tiledRight || tiledLeft) {
-        roundedRect.addRect(margins().left(), margins().bottom(), surfaceRect.width() - margins().left() - margins().right(), margins().top() + 8);
+        roundedRect.addRect(marg.left(), marg.bottom(), surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8);
     } else {
-        roundedRect.addRoundedRect(margins().left(), margins().bottom(), surfaceRect.width() - margins().left() - margins().right(), margins().top() + 8, 8, 8);
+        roundedRect.addRoundedRect(marg.left(), marg.bottom(), surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8, 8, 8);
     }
 
     p.fillPath(roundedRect.simplified(), active ? m_backgroundColor : m_backgroundInactiveColor);
@@ -344,9 +343,9 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
         if (!tiledLeft) {
             // Assume tiled-left also means it will be tiled-top and tiled bottom
             borderPath.addRect(SHADOWS_WIDTH,
-                               tiledTop || tiledBottom ? 0 : margins().top(),
+                               tiledTop || tiledBottom ? 0 : marg.top(),
                                WINDOW_BORDER_WIDTH,
-                               tiledTop || tiledBottom ? surfaceRect.height() : surfaceRect.height() - margins().top() - SHADOWS_WIDTH - WINDOW_BORDER_WIDTH);
+                               tiledTop || tiledBottom ? surfaceRect.height() : surfaceRect.height() - marg.top() - SHADOWS_WIDTH - WINDOW_BORDER_WIDTH);
         }
         // Bottom
         if (!tiledBottom) {
@@ -357,10 +356,10 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
         }
         // Right
         if (!tiledRight) {
-            borderPath.addRect(surfaceRect.width() - margins().right(),
-                               tiledTop || tiledBottom ? 0 : margins().top(),
+            borderPath.addRect(surfaceRect.width() - marg.right(),
+                               tiledTop || tiledBottom ? 0 : marg.top(),
                                WINDOW_BORDER_WIDTH,
-                               tiledTop || tiledBottom ? surfaceRect.height() : surfaceRect.height() - margins().top() - SHADOWS_WIDTH - WINDOW_BORDER_WIDTH);
+                               tiledTop || tiledBottom ? surfaceRect.height() : surfaceRect.height() - marg.top() - SHADOWS_WIDTH - WINDOW_BORDER_WIDTH);
         }
         p.fillPath(borderPath, borderColor);
     }
@@ -379,7 +378,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // ********************************
     QPainterPath borderRect;
     if (!(windowStates & Qt::WindowMaximized)) {
-        borderRect.addRoundedRect(0, 0, surfaceRect.width(), margins().top() + 8, 10, 10);
+        borderRect.addRoundedRect(0, 0, surfaceRect.width(), marg.top() + 8, 10, 10);
         p.fillPath(borderRect.simplified(), borderColor);
     }
 
@@ -397,10 +396,9 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // ********************************
     QPainterPath roundedRect;
     if ((windowStates & Qt::WindowMaximized)) {
-        roundedRect.addRect(0, 0, surfaceRect.width(), margins().top() + 8);
+        roundedRect.addRect(0, 0, surfaceRect.width(), marg.top() + 8);
     } else {
-        roundedRect
-            .addRoundedRect(WINDOW_BORDER_WIDTH, WINDOW_BORDER_WIDTH, surfaceRect.width() - margins().left() - margins().right(), margins().top() + 8, 8, 8);
+        roundedRect.addRoundedRect(WINDOW_BORDER_WIDTH, WINDOW_BORDER_WIDTH, surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8, 8, 8);
     }
 
     p.fillPath(roundedRect.simplified(), active ? m_backgroundColor : m_backgroundInactiveColor);
@@ -420,14 +418,11 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     if (!(windowStates & Qt::WindowMaximized)) {
         QPainterPath borderPath;
         // Left
-        borderPath.addRect(0, margins().top(), margins().left(), surfaceRect.height() - margins().top() - WINDOW_BORDER_WIDTH);
+        borderPath.addRect(0, marg.top(), marg.left(), surfaceRect.height() - marg.top() - WINDOW_BORDER_WIDTH);
         // Bottom
         borderPath.addRect(0, surfaceRect.height() - WINDOW_BORDER_WIDTH, surfaceRect.width(), WINDOW_BORDER_WIDTH);
         // Right
-        borderPath.addRect(surfaceRect.width() - margins().right(),
-                           margins().top(),
-                           WINDOW_BORDER_WIDTH,
-                           surfaceRect.height() - margins().bottom() - margins().top());
+        borderPath.addRect(surfaceRect.width() - marg.right(), marg.top(), WINDOW_BORDER_WIDTH, surfaceRect.height() - marg.bottom() - marg.top());
         p.fillPath(borderPath, borderColor);
     }
 #endif
@@ -445,10 +440,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // ********************************
     p.save();
     p.setPen(borderColor);
-    p.drawLine(QLineF(margins().left(),
-                      margins().top() - TITLEBAR_SEPARATOR_SIZE,
-                      surfaceRect.width() - margins().right(),
-                      margins().top() - TITLEBAR_SEPARATOR_SIZE));
+    p.drawLine(QLineF(marg.left(), marg.top() - TITLEBAR_SEPARATOR_SIZE, surfaceRect.width() - marg.right(), marg.top() - TITLEBAR_SEPARATOR_SIZE));
     p.restore();
 
     // Window title
@@ -464,7 +456,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // *------------------------------*
     // ********************************
 
-    const QRect top = QRect(margins().left(), margins().bottom(), surfaceRect.width(), margins().top() - margins().bottom());
+    const QRect top = QRect(marg.left(), marg.bottom(), surfaceRect.width(), marg.top() - marg.bottom());
     const QString windowTitleText = window()->title();
     if (!windowTitleText.isEmpty()) {
         if (m_windowTitle.text() != windowTitleText) {
@@ -474,11 +466,11 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
 
         QRect titleBar = top;
         if (GnomeSettings::getInstance().titlebarButtonPlacement() == GnomeSettings::getInstance().RightPlacement) {
-            titleBar.setLeft(margins().left());
+            titleBar.setLeft(marg.left());
             titleBar.setRight(static_cast<int>(minimizeButtonRect().left()) - 8);
         } else {
             titleBar.setLeft(static_cast<int>(minimizeButtonRect().right()) + 8);
-            titleBar.setRight(surfaceRect.width() - margins().right());
+            titleBar.setRight(surfaceRect.width() - marg.right());
         }
 
         p.save();
@@ -565,20 +557,21 @@ bool QGnomePlatformDecoration::handleMouse(QWaylandInputDevice *inputDevice,
                                            Qt::KeyboardModifiers mods)
 {
     Q_UNUSED(global)
+    const QMargins marg = margins();
 
-    if (local.y() > margins().top()) {
+    if (local.y() > marg.top()) {
         updateButtonHoverState(Button::None);
     }
 
     // Figure out what area mouse is in
     QRect surfaceRect = windowContentGeometry();
-    if (local.y() <= surfaceRect.top() + margins().top()) {
+    if (local.y() <= surfaceRect.top() + marg.top()) {
         processMouseTop(inputDevice, local, b, mods);
-    } else if (local.y() > surfaceRect.bottom() - margins().bottom()) {
+    } else if (local.y() > surfaceRect.bottom() - marg.bottom()) {
         processMouseBottom(inputDevice, local, b, mods);
-    } else if (local.x() <= surfaceRect.left() + margins().left()) {
+    } else if (local.x() <= surfaceRect.left() + marg.left()) {
         processMouseLeft(inputDevice, local, b, mods);
-    } else if (local.x() > surfaceRect.right() - margins().right()) {
+    } else if (local.x() > surfaceRect.right() - marg.right()) {
         processMouseRight(inputDevice, local, b, mods);
     } else {
 #if QT_CONFIG(cursor)
@@ -699,18 +692,20 @@ void QGnomePlatformDecoration::processMouseTop(QWaylandInputDevice *inputDevice,
     QDateTime currentDateTime = QDateTime::currentDateTime();
     QRect surfaceRect = windowContentGeometry();
 
+    const QMargins marg = margins();
+
     if (!closeButtonRect().contains(local) && !maximizeButtonRect().contains(local) && !minimizeButtonRect().contains(local)) {
         updateButtonHoverState(Button::None);
     }
 
-    if (local.y() <= surfaceRect.top() + margins().bottom()) {
-        if (local.x() <= margins().left()) {
+    if (local.y() <= surfaceRect.top() + marg.bottom()) {
+        if (local.x() <= marg.left()) {
             // top left bit
 #if QT_CONFIG(cursor)
             waylandWindow()->setMouseCursor(inputDevice, Qt::SizeFDiagCursor);
 #endif
             startResize(inputDevice, Qt::TopEdge | Qt::LeftEdge, b);
-        } else if (local.x() > surfaceRect.right() - margins().left()) {
+        } else if (local.x() > surfaceRect.right() - marg.left()) {
             // top right bit
 #if QT_CONFIG(cursor)
             waylandWindow()->setMouseCursor(inputDevice, Qt::SizeBDiagCursor);
@@ -723,9 +718,9 @@ void QGnomePlatformDecoration::processMouseTop(QWaylandInputDevice *inputDevice,
 #endif
             startResize(inputDevice, Qt::TopEdge, b);
         }
-    } else if (local.x() <= surfaceRect.left() + margins().left()) {
+    } else if (local.x() <= surfaceRect.left() + marg.left()) {
         processMouseLeft(inputDevice, local, b, mods);
-    } else if (local.x() > surfaceRect.right() - margins().right()) {
+    } else if (local.x() > surfaceRect.right() - marg.right()) {
         processMouseRight(inputDevice, local, b, mods);
     } else if (closeButtonRect().contains(local)) {
         if (clickButton(b, Close)) {
@@ -762,13 +757,15 @@ void QGnomePlatformDecoration::processMouseTop(QWaylandInputDevice *inputDevice,
 void QGnomePlatformDecoration::processMouseBottom(QWaylandInputDevice *inputDevice, const QPointF &local, Qt::MouseButtons b, Qt::KeyboardModifiers mods)
 {
     Q_UNUSED(mods)
-    if (local.x() <= margins().left()) {
+    const QMargins marg = margins();
+
+    if (local.x() <= marg.left()) {
         // bottom left bit
 #if QT_CONFIG(cursor)
         waylandWindow()->setMouseCursor(inputDevice, Qt::SizeBDiagCursor);
 #endif
         startResize(inputDevice, Qt::BottomEdge | Qt::LeftEdge, b);
-    } else if (local.x() > window()->width() + margins().right()) {
+    } else if (local.x() > window()->width() + marg.right()) {
         // bottom right bit
 #if QT_CONFIG(cursor)
         waylandWindow()->setMouseCursor(inputDevice, Qt::SizeFDiagCursor);
