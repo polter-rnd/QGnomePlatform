@@ -107,6 +107,7 @@ private:
     Button m_clicking = None;
 
     // Shadows
+    QBrush m_shadowBrush;
     QPixmap m_shadowPixmap;
 
     Adwaita::ColorVariant m_adwaitaVariant;

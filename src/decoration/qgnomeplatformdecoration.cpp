@@ -234,17 +234,17 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
             source.fill(Qt::transparent);
             {
                 QPainter tmpPainter(&source);
-                tmpPainter.setBrush(borderColor);
+                tmpPainter.setBrush(m_shadowBrush);
                 tmpPainter.drawRoundedRect(SHADOWS_WIDTH, // Do not paint over shadows
                                            SHADOWS_WIDTH, // Do not paint over shadows
-                                           surfaceRect.width() - (2 * SHADOWS_WIDTH), // Full width - shadows
-                                           surfaceRect.height() / 2, // Half of the full height
+                                           surfaceRect.width() - (2 * SHADOWS_WIDTH) - 1, // Full width - shadows
+                                           surfaceRect.height() / 2 - 1, // Half of the full height
                                            8,
                                            8);
                 tmpPainter.drawRect(SHADOWS_WIDTH, // Do not paint over shadows
                                     surfaceRect.height() / 2, // Start somewhere in the middle
-                                    surfaceRect.width() - (2 * SHADOWS_WIDTH), // Full width - shadows
-                                    (surfaceRect.height() / 2) - SHADOWS_WIDTH); // Half of the full height - shadows
+                                    surfaceRect.width() - (2 * SHADOWS_WIDTH) - 1, // Full width - shadows
+                                    (surfaceRect.height() / 2) - SHADOWS_WIDTH - 1); // Half of the full height - shadows
                 tmpPainter.end();
             }
 
@@ -676,6 +676,7 @@ void QGnomePlatformDecoration::loadConfiguration()
 
     const QPalette &palette(Adwaita::Colors::palette(m_adwaitaVariant));
 
+    m_shadowBrush = palette.shadow();
     m_foregroundColor = palette.color(QPalette::Active, QPalette::WindowText);
     m_foregroundInactiveColor = palette.color(QPalette::Inactive, QPalette::WindowText);
     m_backgroundColorStart = darkVariant ? QColor("#262626") : QColor("#dad6d2"); // Adwaita GtkHeaderBar color
