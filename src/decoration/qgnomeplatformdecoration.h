@@ -112,6 +112,9 @@ private:
     QPixmap m_shadowPixmap;
 
     Adwaita::ColorVariant m_adwaitaVariant;
+
+    // Hide titlebar when maximized
+    bool m_hideTitlebarWhenMaximized;
 };
 
 #endif // QGNOMEPLATFORMDECORATION_H

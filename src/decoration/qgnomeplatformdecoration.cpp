@@ -153,7 +153,7 @@ QMargins QGnomePlatformDecoration::margins(MarginsType marginsType) const
     if (marginsType == Full || marginsType == ShadowsExcluded) {
         // For maximized window, we only include window title, no borders and no shadows
         if (maximized) {
-            return QMargins(0, TITLEBAR_HEIGHT, 0, 0);
+            return QMargins(0, m_hideTitlebarWhenMaximized ? 0 : TITLEBAR_HEIGHT, 0, 0);
         }
 
         // Specifically requsted margins with shadows excluded, only on non-tiled side
@@ -183,7 +183,7 @@ QMargins QGnomePlatformDecoration::margins(MarginsType marginsType) const
 QMargins QGnomePlatformDecoration::margins() const
 {
     if ((window()->windowStates() & Qt::WindowMaximized)) {
-        return QMargins(0, TITLEBAR_HEIGHT, 0, 0);
+        return QMargins(0, m_hideTitlebarWhenMaximized ? 0 : TITLEBAR_HEIGHT, 0, 0);
     }
 
     return QMargins(WINDOW_BORDER_WIDTH, // Left
@@ -316,14 +316,16 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // *                              *
     // *                              *
     // ********************************
-    QPainterPath roundedRect;
-    if (maximized || tiledRight || tiledLeft) {
-        roundedRect.addRect(marg.left(), marg.bottom(), surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8);
-    } else {
-        roundedRect.addRoundedRect(marg.left(), marg.bottom(), surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8, 8, 8);
-    }
+    if (!m_hideTitlebarWhenMaximized || !maximized) {
+        QPainterPath roundedRect;
+        if (maximized || tiledRight || tiledLeft) {
+            roundedRect.addRect(marg.left(), marg.bottom(), surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8);
+        } else {
+            roundedRect.addRoundedRect(marg.left(), marg.bottom(), surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8, 8, 8);
+        }
 
-    p.fillPath(roundedRect.simplified(), active ? m_backgroundColor : m_backgroundInactiveColor);
+        p.fillPath(roundedRect.simplified(), active ? m_backgroundColor : m_backgroundInactiveColor);
+    }
 
     // Border around
     // ********************************
@@ -377,7 +379,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // *                              *
     // ********************************
     QPainterPath borderRect;
-    if (!(windowStates & Qt::WindowMaximized)) {
+    if (!maximized) {
         borderRect.addRoundedRect(0, 0, surfaceRect.width(), marg.top() + 8, 10, 10);
         p.fillPath(borderRect.simplified(), borderColor);
     }
@@ -395,7 +397,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // *                              *
     // ********************************
     QPainterPath roundedRect;
-    if ((windowStates & Qt::WindowMaximized)) {
+    if (maximized) {
         roundedRect.addRect(0, 0, surfaceRect.width(), marg.top() + 8);
     } else {
         roundedRect.addRoundedRect(WINDOW_BORDER_WIDTH, WINDOW_BORDER_WIDTH, surfaceRect.width() - marg.left() - marg.right(), marg.top() + 8, 8, 8);
@@ -415,7 +417,7 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
     // *|                            |*
     // *------------------------------*
     // ********************************
-    if (!(windowStates & Qt::WindowMaximized)) {
+    if (!maximized) {
         QPainterPath borderPath;
         // Left
         borderPath.addRect(0, marg.top(), marg.left(), surfaceRect.height() - marg.top() - WINDOW_BORDER_WIDTH);
@@ -426,85 +428,88 @@ void QGnomePlatformDecoration::paint(QPaintDevice *device)
         p.fillPath(borderPath, borderColor);
     }
 #endif
-    // Border between window and decorations
-    // ********************************
-    // *------------------------------*
-    // *|############################|*
-    // *------------------------------*
-    // *|                            |*
-    // *|                            |*
-    // *|                            |*
-    // *|                            |*
-    // *|                            |*
-    // *------------------------------*
-    // ********************************
-    p.save();
-    p.setPen(borderColor);
-    p.drawLine(QLineF(marg.left(), marg.top() - TITLEBAR_SEPARATOR_SIZE, surfaceRect.width() - marg.right(), marg.top() - TITLEBAR_SEPARATOR_SIZE));
-    p.restore();
 
-    // Window title
-    // ********************************
-    // *------------------------------*
-    // *|########## FOO #############|*
-    // *------------------------------*
-    // *|                            |*
-    // *|                            |*
-    // *|                            |*
-    // *|                            |*
-    // *|                            |*
-    // *------------------------------*
-    // ********************************
-
-    const QRect top = QRect(marg.left(), marg.bottom(), surfaceRect.width(), marg.top() - marg.bottom());
-    const QString windowTitleText = window()->title();
-    if (!windowTitleText.isEmpty()) {
-        if (m_windowTitle.text() != windowTitleText) {
-            m_windowTitle.setText(windowTitleText);
-            m_windowTitle.prepare();
-        }
-
-        QRect titleBar = top;
-        if (GnomeSettings::getInstance().titlebarButtonPlacement() == GnomeSettings::getInstance().RightPlacement) {
-            titleBar.setLeft(marg.left());
-            titleBar.setRight(static_cast<int>(minimizeButtonRect().left()) - 8);
-        } else {
-            titleBar.setLeft(static_cast<int>(minimizeButtonRect().right()) + 8);
-            titleBar.setRight(surfaceRect.width() - marg.right());
-        }
-
+    if (!m_hideTitlebarWhenMaximized || !maximized) {
+        // Border between window and decorations
+        // ********************************
+        // *------------------------------*
+        // *|############################|*
+        // *------------------------------*
+        // *|                            |*
+        // *|                            |*
+        // *|                            |*
+        // *|                            |*
+        // *|                            |*
+        // *------------------------------*
+        // ********************************
         p.save();
-        p.setClipRect(titleBar);
-        p.setPen(active ? m_foregroundColor : m_foregroundInactiveColor);
-        QSizeF size = m_windowTitle.size();
-        int dx = (static_cast<int>(top.width()) - static_cast<int>(size.width())) / 2;
-        int dy = (static_cast<int>(top.height()) - static_cast<int>(size.height())) / 2;
-        QFont font;
-        const QFont *themeFont = GnomeSettings::getInstance().font(QPlatformTheme::TitleBarFont);
-        font.setPointSizeF(themeFont->pointSizeF());
-        font.setFamily(themeFont->family());
-        font.setBold(themeFont->bold());
-        p.setFont(font);
-        QPoint windowTitlePoint(top.topLeft().x() + dx, top.topLeft().y() + dy);
-        p.drawStaticText(windowTitlePoint, m_windowTitle);
+        p.setPen(borderColor);
+        p.drawLine(QLineF(marg.left(), marg.top() - TITLEBAR_SEPARATOR_SIZE, surfaceRect.width() - marg.right(), marg.top() - TITLEBAR_SEPARATOR_SIZE));
         p.restore();
-    }
 
-    // Close button
-    renderButton(&p, closeButtonRect(), Adwaita::ButtonType::ButtonClose, m_closeButtonHovered && active, m_clicking == Button::Close);
+        // Window title
+        // ********************************
+        // *------------------------------*
+        // *|########## FOO #############|*
+        // *------------------------------*
+        // *|                            |*
+        // *|                            |*
+        // *|                            |*
+        // *|                            |*
+        // *|                            |*
+        // *------------------------------*
+        // ********************************
 
-    // Maximize button
-    if (GnomeSettings::getInstance().titlebarButtons().testFlag(GnomeSettings::getInstance().MaximizeButton)) {
-        renderButton(&p,
-                     maximizeButtonRect(),
-                     (windowStates & Qt::WindowMaximized) ? Adwaita::ButtonType::ButtonRestore : Adwaita::ButtonType::ButtonMaximize,
-                     m_maximizeButtonHovered && active,
-                     m_clicking == Button::Maximize || m_clicking == Button::Restore);
-    }
+        const QRect top = QRect(marg.left(), marg.bottom(), surfaceRect.width(), marg.top() - marg.bottom());
+        const QString windowTitleText = window()->title();
+        if (!windowTitleText.isEmpty()) {
+            if (m_windowTitle.text() != windowTitleText) {
+                m_windowTitle.setText(windowTitleText);
+                m_windowTitle.prepare();
+            }
 
-    // Minimize button
-    if (GnomeSettings::getInstance().titlebarButtons().testFlag(GnomeSettings::getInstance().MinimizeButton)) {
-        renderButton(&p, minimizeButtonRect(), Adwaita::ButtonType::ButtonMinimize, m_minimizeButtonHovered && active, m_clicking == Button::Minimize);
+            QRect titleBar = top;
+            if (GnomeSettings::getInstance().titlebarButtonPlacement() == GnomeSettings::getInstance().RightPlacement) {
+                titleBar.setLeft(marg.left());
+                titleBar.setRight(static_cast<int>(minimizeButtonRect().left()) - 8);
+            } else {
+                titleBar.setLeft(static_cast<int>(minimizeButtonRect().right()) + 8);
+                titleBar.setRight(surfaceRect.width() - marg.right());
+            }
+
+            p.save();
+            p.setClipRect(titleBar);
+            p.setPen(active ? m_foregroundColor : m_foregroundInactiveColor);
+            QSizeF size = m_windowTitle.size();
+            int dx = (static_cast<int>(top.width()) - static_cast<int>(size.width())) / 2;
+            int dy = (static_cast<int>(top.height()) - static_cast<int>(size.height())) / 2;
+            QFont font;
+            const QFont *themeFont = GnomeSettings::getInstance().font(QPlatformTheme::TitleBarFont);
+            font.setPointSizeF(themeFont->pointSizeF());
+            font.setFamily(themeFont->family());
+            font.setBold(themeFont->bold());
+            p.setFont(font);
+            QPoint windowTitlePoint(top.topLeft().x() + dx, top.topLeft().y() + dy);
+            p.drawStaticText(windowTitlePoint, m_windowTitle);
+            p.restore();
+        }
+
+        // Close button
+        renderButton(&p, closeButtonRect(), Adwaita::ButtonType::ButtonClose, m_closeButtonHovered && active, m_clicking == Button::Close);
+
+        // Maximize button
+        if (GnomeSettings::getInstance().titlebarButtons().testFlag(GnomeSettings::getInstance().MaximizeButton)) {
+            renderButton(&p,
+                         maximizeButtonRect(),
+                         (windowStates & Qt::WindowMaximized) ? Adwaita::ButtonType::ButtonRestore : Adwaita::ButtonType::ButtonMaximize,
+                         m_maximizeButtonHovered && active,
+                         m_clicking == Button::Maximize || m_clicking == Button::Restore);
+        }
+
+        // Minimize button
+        if (GnomeSettings::getInstance().titlebarButtons().testFlag(GnomeSettings::getInstance().MinimizeButton)) {
+            renderButton(&p, minimizeButtonRect(), Adwaita::ButtonType::ButtonMinimize, m_minimizeButtonHovered && active, m_clicking == Button::Minimize);
+        }
     }
 
     // HACK to prevent window from losing focus while moving or resizing
@@ -672,6 +677,13 @@ void QGnomePlatformDecoration::loadConfiguration()
     m_borderInactiveColor = darkVariant ? QColor("#303030") : QColor("#dbdbdb");
     m_buttonBackgroundColor = darkVariant ? QColor("#444444") : QColor("#d8d8d8");
     m_buttonHoverColor = darkVariant ? QColor("#4a4a4a") : QColor("#c9c9c9");
+
+    if (qEnvironmentVariableIsSet("QT_HIDE_TITLEBAR_WHEN_MAXIMIZED")) {
+        /* If QT_STYLE_OVERRIDE we should rely on it */
+        m_hideTitlebarWhenMaximized = QVariant(qgetenv("QT_HIDE_TITLEBAR_WHEN_MAXIMIZED")).toBool();
+    } else {
+        m_hideTitlebarWhenMaximized = false;
+    }
 }
 
 void QGnomePlatformDecoration::forceRepaint()
